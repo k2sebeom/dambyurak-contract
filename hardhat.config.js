@@ -7,32 +7,24 @@ require("@nomiclabs/hardhat-etherscan");
 const { task } = require('hardhat/config');
 
 
-task("mint", "Mint based on assets on nft directory")
+task("mint", "Bulk mint assets on Dambyurak contract")
   .addParam("address", "Address of the deployed contract")
-  .addParam("cid", "CID for metadata on IPFS")
+  .addParam("count", "Number of tokens to be minted")
   .setAction(async (args) => {
-    const glob = require('glob');
     const { ethers } = require("hardhat");
 
     console.log("Minting started...");
 
-    const Dambyurak = await ethers.getContractFactory('Dambyurak');
+    const Dambyurak = await ethers.getContractFactory("Dambyurak");
     const contract = await Dambyurak.attach(args.address);
 
     console.log(`===== Contract Attached at address: ${contract.address}=====`);
     const owner = await contract.owner();
-    console.log(`===== Minting NFT to contract owner ${owner}=====`);
+    console.log(`===== Minting ${args.count} tokens to contract owner ${owner}=====`);
+    const tx = await contract.bulkMint(owner, args.count);
+    await tx.wait();
 
-    const gatewayUrl = "https://gateway.pinata.cloud/ipfs/";
-    metadataPath = "./nft/metadata";
-    const files = glob.sync(metadataPath + '/*.json');
-    for(let i = 0; i < files.length; i++) {
-        const tokenURI = gatewayUrl + args.cid + `/WALL-${i+1}.json`;
-        console.log(`Minting ${tokenURI}...`);
-        const tx = await contract.safeMint(owner, tokenURI);
-        await tx.wait();
-        console.log('Success!');
-    }
+    console.log('Success!');
   })
 
 module.exports = {
